@@ -133,7 +133,6 @@ function pingplus {
     - DomainAccess: Indicates whether the local system can access the specified domain (True or False).
 #>
 function Get-LocalDetails {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
     param (
         # No parameters for this function
     )
@@ -204,5 +203,36 @@ function Get-LocalDetails {
     return $result
 }
 
-Export-ModuleMember -Function pingplus
-Export-ModuleMember -Function Get-LocalDetails
+export-modulemember -function * -alias *
+
+# SIG # Begin signature block
+# MIIFWwYJKoZIhvcNAQcCoIIFTDCCBUgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
+# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUB1IkrMskNDkeSsmvrIHMnWO1
+# 3KegggL2MIIC8jCCAdqgAwIBAgIQYseIafgwqaZNeZ4d0CYhxTANBgkqhkiG9w0B
+# AQsFADAaMRgwFgYDVQQDEw9LZXZpbiBLdmlzc2JlcmcwHhcNMjMxMjE4MjMxODA0
+# WhcNMjQxMjE4MDUxODA0WjAaMRgwFgYDVQQDEw9LZXZpbiBLdmlzc2JlcmcwggEi
+# MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDKlNjwOPiKcBJ86HgpMe6dojbh
+# 8stpdYz+D9rLchQwSVRLJkay4McHeETdeUTRPgqVZfnt3ExwJpQoEwKw3mKcU+xe
+# OQfODBAURPneH6AU774u2es3/qfIWITlW423s4DInw4X1LC4wblD59fnprfF1MpA
+# ZvouL+NndDlDjf8JRvHL3XgaD9niT2g2+VeLTkZ3F1VYT5itH1S2a5jwmkesniOz
+# CyEBwpF/J/UlTcID2Cgue7gnbxPaBPxphqvHGahufKGIwXutO7++6pgV0no7ZMFh
+# wrXudFf2JUUGR2HhiB69RU+5FAlNngyDfzqRSVBQo0q8PX2nA0Er51yuuYepAgMB
+# AAGjNDAyMAwGA1UdEwEB/wQCMAAwIgYDVR0lAQH/BBgwFgYIKwYBBQUHAwMGCisG
+# AQQBgjdUAwEwDQYJKoZIhvcNAQELBQADggEBADcCLTlOYo8cRrcuhqDTvvc+7u7E
+# +epENHrEXm3lNNgDZZDlYhgj3M5+Oewl6mSiE6RB9YoPwpZ4Xc7nmOQD2bZhELfP
+# Zqy0NQ5yXHQ6frFeJ0FGr/XL3wTlvpaknfCxX7YcnLzw6e3I2psbSfOUA6+JL9T8
+# tx7GZsWyKXmkncw8P7WzLHPEuVGnaOaUPs8HozzWlwNXoawXo5RwaCg/AGTsiiAH
+# DreH/1myE+vbPFeAQyTlDhf8wVigXRuVWALn0YqaUG2yIoaOteqZdGc+vGL9JFpx
+# nqgP7LwSgVnt9wNdO+9LwCgFyzvtVwSEojSaC0ymHB3rlL3X5tna3O4K1TMxggHP
+# MIIBywIBATAuMBoxGDAWBgNVBAMTD0tldmluIEt2aXNzYmVyZwIQYseIafgwqaZN
+# eZ4d0CYhxTAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIBDDEKMAigAoAAoQKAADAZ
+# BgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEEAYI3AgELMQ4wDAYKKwYB
+# BAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU5oF7ooVFN5HT8Olx0Yc4g70aJI8wDQYJ
+# KoZIhvcNAQEBBQAEggEArIfizRYQA8UiCXubIS+M0LUteBnwKl0pR20x3b6Co3vU
+# UZfqD/ZxOmM9dV+xSDiln6cGBWR+1Ul34UmUJ6Yjczi+B3oSxdQ+PYV2M4b6s4UQ
+# abMrO+X9WKc4DgHpLhmEmiYZlKeCv6tj0tKyEaCTxIkXJz0PsFjpQls82dtYPbr8
+# 0IoiRpdIPF99bzzL/4YqldVfKwQUnX1VGER1xuRDz7OrN08s2Gnere77wCTgJLMj
+# e5lj2tB5Ymg09aZ/6oQoGVksMmIaFLm0PhsRUY6YzbKPuetQuZw/a/RTCeexo5Vy
+# x1EKLZkGPjJpQseQOvvKzHKyOCQ4CBhNpnwXL07jVA==
+# SIG # End signature block
