@@ -238,4 +238,26 @@ function Trace-Eventlog {
     }
 }
 
+function Initialize-GPUpdate {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '')]
+    [alias("gpu")]
+    param (
+        [Parameter()]
+        [switch]$noForce,
+        [Parameter()]
+        [ValidateSet("Computer", "User", "Both")]
+        [Alias("t")]
+        [string]$target = "Both",
+        [Parameter()]
+        [Alias("b")]
+        [switch]$boot
+    )
+    $attributes = @()
+    if ($noForce -eq $false) { $attributes += "/force" }
+    if ($target -ne "Both") { $attributes += "/target:$target" }
+    if ($boot) { $attributes += "/boot" }
+
+    Invoke-Expression "GPUpdate $($attributes -join ' ')"
+}
+
 export-modulemember -function * -alias *
