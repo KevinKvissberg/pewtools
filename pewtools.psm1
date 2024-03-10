@@ -425,4 +425,64 @@ Function Get-DiskUsage {
     return $diskSpace
 }
 
+<#
+.SYNOPSIS
+   Retrieves information about certificate expiry for the specified target.
+
+.DESCRIPTION
+   This function retrieves information about certificate expiry for either the local machine or a remote target.
+   It checks the certificates in the "My" store and provides details such as subject, thumbprint, expiration date, and whether it will expire soon.
+
+.PARAMETER target
+   Specifies the target machine. If not provided, it checks certificates on the local machine.
+
+.PARAMETER credentials
+   Specifies the credentials to be used when checking certificates on a remote machine.
+#>
+function Get-CertificateExpiry {
+    param (
+        $target,
+        [PSCredential]$credentials
+    )
+    #TODO Accept multiple targets
+    # Array to store the result of certificate information
+    $result = @()
+
+    # Array to store all certificates
+    $allCertificates = @()
+
+    # Check if a target machine is specified
+    if ($null -eq $target) {
+        # If no target specified, check certificates on the local machine
+        $allCertificates += Get-ChildItem -Path Cert:\LocalMachine\My
+    }
+    else {
+        # If a target is specified and credentials are not provided, prompt for credentials
+        if ($null -eq $credentials) {
+            $credentials = Get-Credential -Message "Enter credentials for $target"
+        }
+
+        # Invoke-Command to retrieve certificates on a remote machine
+        $allCertificates += Invoke-Command -ComputerName $target -Credential $credentials {
+            Get-ChildItem -Path Cert:\LocalMachine\My
+        }
+    }
+
+    # Loop through each certificate and create an output object
+    foreach ($certificate in $allCertificates) {
+        $output = "" | Select-Object Subject, Thumbprint, NotAfter, Soon
+        $output.Subject = $certificate.Subject
+        $output.Thumbprint = $certificate.Thumbprint
+        $output.NotAfter = $certificate.NotAfter
+        $output.Soon = ($certificate.NotAfter -lt (Get-Date).AddDays(60))  # Check if the certificate will expire soon (within 60 days)
+
+        # Add the output object to the result array
+        $result += $output
+    }
+
+    # Return the result array
+    return $result
+}
+
+
 export-modulemember -function * -alias *
