@@ -133,6 +133,7 @@ function pingplus {
     - DomainAccess: Indicates whether the local system can access the specified domain (True or False).
 #>
 function Get-LocalDetails {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','')]
     param (
         # No parameters for this function
     )
@@ -203,6 +204,26 @@ function Get-LocalDetails {
     return $result
 }
 
+<#
+.SYNOPSIS
+   Continuously monitors and retrieves new events from the specified event log with optional filtering.
+
+.DESCRIPTION
+   This function continuously monitors and retrieves new events from the specified event log,
+   allowing optional filtering by source, message, and entry type.
+
+.PARAMETER LogName
+   Specifies the name of the event log to monitor. Default is "Application".
+
+.PARAMETER Source
+   Specifies the event source. Default is "*".
+
+.PARAMETER Message
+   Specifies a message filter for the events. Default is "*".
+
+.PARAMETER EntryType
+   Specifies the entry types to include (e.g., "Error", "Warning", "Information", "SuccessAudit", "FailureAudit").
+#>
 function Trace-Eventlog {
     param (
         [Parameter()]
@@ -216,9 +237,14 @@ function Trace-Eventlog {
         [ValidateSet("Error", "Warning", "Information", "SuccessAudit", "FailureAudit")]
         [String]$EntryType
     )
+
+    # Array to store retrieved events
     $allevents = @()
+
+    # Continuous monitoring loop
     while ($true) {
         try {
+            # Retrieve new events based on parameters
             if ($EntryType) {
                 $newEvents = Get-EventLog $LogName -Newest 10 -Source $Source -Message "*$Message*" -EntryType $EntryType -ErrorAction Stop | Where-Object { $_.Index -notin $allevents.Index }
             } else {
@@ -226,18 +252,41 @@ function Trace-Eventlog {
             }
         }
         catch {
-            Write-Host "Error: $_"
+            Write-Error "Error: $_"
             return;
         }
+
+        # If new events are retrieved, add them to the array in reverse order
         if ($null -ne $newEvents) {
             [array]::Reverse($newEvents)
             $allevents += $newEvents
         }
+
+        # Output the new events
         $newEvents
+
+        # Pause for a short interval before checking for new events again
         [System.Threading.Thread]::Sleep(100)
     }
 }
 
+
+<#
+.SYNOPSIS
+   Use alias gpu for writing the command gpupdate faster.
+
+.DESCRIPTION
+   This function initializes a Group Policy update with optional parameters such as force, target, and boot.
+
+.PARAMETER noForce
+   Suppresses the force update if this switch is present.
+
+.PARAMETER target
+   Specifies the target for the Group Policy update. Possible values are "Computer", "User", or "Both" (default).
+
+.PARAMETER boot
+   Performs a boot-time Group Policy update if this switch is present.
+#>
 function Initialize-GPUpdate {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '')]
     [alias("gpu")]
@@ -252,12 +301,72 @@ function Initialize-GPUpdate {
         [Alias("b")]
         [switch]$boot
     )
+
+    # Array to store attributes for the GPUpdate command
     $attributes = @()
+
+    # Check if the noForce switch is not present
     if ($noForce -eq $false) { $attributes += "/force" }
+
+    # Check if the target is different from the default "Both"
     if ($target -ne "Both") { $attributes += "/target:$target" }
+
+    # Check if the boot switch is present
     if ($boot) { $attributes += "/boot" }
 
+    # Construct and execute the GPUpdate command using Invoke-Expression
     Invoke-Expression "GPUpdate $($attributes -join ' ')"
 }
+
+
+<#
+.SYNOPSIS
+   Retrieves information about installed software on a Windows system.
+
+.DESCRIPTION
+   This function queries the Windows Registry to gather information about installed software,
+   focusing on the "Uninstall" key in the registry.
+#>
+function Get-Apps {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','')]
+    param ()
+
+    # Query the "Uninstall" key in the Windows Registry to get software information
+    $queriedSoftware = Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+
+    # Function to convert date format from 'yyyyMMdd' to 'yyyy-MM-dd'
+    function Convert-DateFormat {
+        param (
+            [string]$InputDate
+        )
+        $FormattedDate = if ($InputDate) { [DateTime]::ParseExact($InputDate, 'yyyyMMdd', $null).ToString('yyyy-MM-dd') }
+        $FormattedDate
+    }
+
+    # Array to store information about installed software
+    $InstalledSoftware = @()
+
+    # Loop through each object in the queried software
+    foreach ($obj in $queriedSoftware) {
+        # Check if DisplayName value is not null
+        if ($null -eq $obj.GetValue('DisplayName')) { continue }
+
+        # Create a custom object for each installed software
+        $software = [PSCustomObject]@{
+            DisplayName    = $obj.GetValue('DisplayName')
+            DisplayVersion = $obj.GetValue('DisplayVersion')
+            Publisher      = $obj.GetValue('Publisher')
+            InstallDate    = Convert-DateFormat -InputDate $obj.GetValue('InstallDate')
+            Size           = "$([math]::Round(($obj.GetValue('EstimatedSize')) / 1KB)) MB"
+        }
+
+        # Add the software object to the array
+        $InstalledSoftware += $software
+    }
+
+    # Return the sorted and formatted table of installed software
+    return ($InstalledSoftware | Sort-Object DisplayName | Format-Table)
+}
+
 
 export-modulemember -function * -alias *
