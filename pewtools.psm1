@@ -368,5 +368,61 @@ function Get-Apps {
     return ($InstalledSoftware | Sort-Object DisplayName | Format-Table)
 }
 
+<#
+.SYNOPSIS
+   Tests the health of the server by checking disk usage, gateway ping, internet connectivity, and DNS resolution.
+
+.DESCRIPTION
+   This function tests the health of the server by performing various checks such as disk usage, gateway ping, internet connectivity, and DNS resolution.
+
+.NOTES
+   File: Test-ServerHealth.ps1
+   Author: Your Name
+   Version: 1.0
+#>
+function Test-ServerHealth {
+    param (
+    )
+
+    # Create a new PSObject to store the health test results
+    $output = New-Object PSObject
+    
+    # Check disk usage
+    Write-Output (Get-DiskUsage)
+
+    # Gateway ping Connection
+    $output | Add-Member -MemberType NoteProperty -Name "GatewayPing" -value (pingplus -target (Get-NetRoute -DestinationPrefix "0.0.0.0/0" | Select-Object -ExpandProperty "NextHop"))
+
+    # Check Network Connectivity
+    $output | Add-Member -MemberType NoteProperty -Name "InternetPing" -value ((pingplus 8.8.8.8, 1.1.1.1).result -contains $true)
+
+    # Check DNS
+    $output | Add-Member -MemberType NoteProperty -Name "DNS" -value ((pingplus -target "google.com", "github.com").result -contains $true)
+
+    # Return the formatted table of test results
+    return ($output | Format-Table)
+}
+
+
+Function Get-DiskUsage {
+    param (
+        [Parameter()]
+        [Alias("s", "q")]
+        [switch]$silent
+    )
+    # Check Disk Space
+    $diskSpace = Get-WmiObject Win32_LogicalDisk -ComputerName $ServerName | Where-Object { $_.DriveType -eq 3 } | Select-Object DeviceID, FreeSpace, Size, UsedPercentage
+    $allDisks = @()
+    foreach ($disk in $diskSpace) {
+        $disk.FreeSpace = [math]::Round($disk.FreeSpace / 1GB, 2)
+        $disk.Size = [math]::Round($disk.Size / 1GB, 2)
+        $UsedPercentage = [math]::Round((($disk.Size - $disk.FreeSpace) / $disk.Size) * 100, 2)
+        $allDisks += $disk
+        
+        if ($silent) { continue }
+        $disk.UsedPercentage = ("[" + ("#" * $UsedPercentage) + " " * (100 - $UsedPercentage) + "]")
+    }
+    return $diskSpace
+}
 
 export-modulemember -function * -alias *
