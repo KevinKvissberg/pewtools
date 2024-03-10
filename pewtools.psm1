@@ -161,10 +161,7 @@ function Get-LocalDetails {
     $result.Username = $systemInfo.CsUserName
 
     # Calculate system uptime
-    $uptime = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
-
-    # Calculate system uptime
-    $result.UpTime = "$($uptime.Days)d, $($uptime.Hours)h, $($uptime.Minutes)m, $($uptime.Seconds)s"
+    $result.UpTime = (Get-Uptime).Readable
 
     # Add domain, system manufacturer, and OS install date
     $result.Domain = $systemInfo.CsDomain
@@ -172,27 +169,13 @@ function Get-LocalDetails {
     $result.OsInstallDate = $systemInfo.OsInstallDate
 
     # Collect network information
-    $netinfo = @()
-    Get-NetIPAddress | Where-Object { $_.PrefixOrigin -ne "WellKnown" } | ForEach-Object {
-        $details = "" | Select-Object Interface, Address, Mask, PrefixOrigin, FirewallZone
-        $details.Interface = $_.InterfaceAlias
-        $details.Address = $_.IPAddress
-        $details.Mask = $_.PrefixLength
-        $details.PrefixOrigin = $_.PrefixOrigin
-        # Get firewall zone from network profile
-        $netProfile = Get-NetConnectionProfile -InterfaceAlias $_.InterfaceAlias -ErrorAction SilentlyContinue
-        if ($netProfile) { $details.FirewallZone = $netProfile.NetworkCategory }
-        else { $details.FirewallZone = "Unknown" }
-
-        $netinfo += $details
-    }
-    $result.netinfo = $netinfo
+    $result.netinfo = Get-NetInfo
 
     # Get default gateway
-    $result.defaultGateway = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | Select-Object -ExpandProperty "NextHop"
+    $result.defaultGateway = Get-NetInfo -defaultGateway
 
     # Get DNS server addresses
-    $result.dnsServers = (Get-DnsClientServerAddress -AddressFamily IPv4).ServerAddresses
+    $result.dnsServers = Get-NetInfo -dnsServers
 
     # Check internet access using custom function pingplus
     $result.InternetAccess = pingplus -target 8.8.8.8
@@ -201,6 +184,88 @@ function Get-LocalDetails {
     $result.DomainAccess = pingplus -target $result.Domain
 
     # Return the populated result object
+    return $result
+}
+
+<#
+.SYNOPSIS
+   Retrieves information about network interfaces, IP addresses, default gateway, and DNS servers.
+
+.DESCRIPTION
+   This function collects and returns information about network interfaces, IP addresses, default gateway, and DNS servers.
+   The user can choose to retrieve the default gateway, DNS servers, or detailed network information.
+
+.PARAMETER defaultGateway
+   Retrieves the default gateway of the system.
+
+.PARAMETER dnsServers
+   Retrieves the DNS servers configured on the system.
+#>
+function Get-NetInfo {
+    param (
+        [Parameter()]
+        [Alias("dg")]
+        [switch]$defaultGateway,
+        [Parameter()]
+        [Alias("dns")]
+        [switch]$dnsServers
+    )
+
+    # If the user requests the default gateway, return it
+    if ($defaultGateway) { 
+        return (Get-NetRoute -DestinationPrefix "0.0.0.0/0" | Select-Object -ExpandProperty "NextHop")
+    }
+    # If the user requests DNS servers, return them
+    elseif ($dnsServers) {
+        return (Get-DnsClientServerAddress -AddressFamily IPv4).ServerAddresses
+    }
+
+    # Collect detailed network information
+    $netinfo = @()
+    Get-NetIPAddress | Where-Object { $_.PrefixOrigin -ne "WellKnown" } | ForEach-Object {
+        $details = "" | Select-Object Interface, Address, Mask, PrefixOrigin, FirewallZone
+        $details.Interface = $_.InterfaceAlias
+        $details.Address = $_.IPAddress
+        $details.Mask = $_.PrefixLength
+        $details.PrefixOrigin = $_.PrefixOrigin
+
+        # Get firewall zone from network profile
+        $netProfile = Get-NetConnectionProfile -InterfaceAlias $_.InterfaceAlias -ErrorAction SilentlyContinue
+        if ($netProfile) { $details.FirewallZone = $netProfile.NetworkCategory }
+        else { $details.FirewallZone = "Unknown" }
+
+        $netinfo += $details
+    }
+
+    # Return the detailed network information
+    return $netinfo
+}
+
+<#
+.SYNOPSIS
+   Retrieves the system uptime in days, hours, minutes, seconds, and a readable format.
+
+.DESCRIPTION
+   This function calculates and returns the system uptime in various formats, including days, hours, minutes, seconds, and a readable string.
+#>
+function Get-Uptime {
+    #TODO support remote targets
+    # Create a new PSObject to store the result of system uptime
+    $result = New-Object PSObject
+
+    # Calculate the system uptime by subtracting LastBootUpTime from the current date
+    $uptime = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+
+    # Add properties to the result object for days, hours, minutes, and seconds
+    $result | Add-Member -MemberType NoteProperty -Name "Days" -Value $uptime.Days
+    $result | Add-Member -MemberType NoteProperty -Name "Hours" -Value $uptime.Hours
+    $result | Add-Member -MemberType NoteProperty -Name "Minutes" -Value $uptime.Minutes
+    $result | Add-Member -MemberType NoteProperty -Name "Seconds" -Value $uptime.Seconds
+
+    # Add a property for a human-readable format of the uptime
+    $result | Add-Member -MemberType NoteProperty -Name "Readable" -Value "$($uptime.Days)d, $($uptime.Hours)h, $($uptime.Minutes)m, $($uptime.Seconds)s"
+
+    # Return the result object
     return $result
 }
 
@@ -484,5 +549,74 @@ function Get-CertificateExpiry {
     return $result
 }
 
+<#
+.SYNOPSIS
+   Retrieves information about system boot history.
+
+.DESCRIPTION
+   This function retrieves information about system boot history by querying the System event log for event IDs 1074 and 6005.
+   It provides details such as timestamp, user, reason/application for the boot, and the associated action.
+
+.NOTES
+   File: Get-BootHistory.ps1
+   Author: Your Name
+   Version: 1.0
+#>
+function Get-BootHistory {
+    param ()
+
+    # Array to store the result of boot history information
+    $result = @()
+
+    # Array to store power events (shutdown and startup) from the System log
+    $powerEvents = @() 
+    $powerEvents += Get-WinEvent -FilterHashTable @{LogName='System'; ID=1074}
+    $powerEvents += Get-WinEvent -FilterHashTable @{LogName='System'; ID=6005}
+    
+    # Sort the power events based on TimeCreated
+    $powerEvents = $powerEvents | Sort-Object TimeCreated
+
+    # Loop through each power event and create an output object
+    foreach ($powerEvent in $powerEvents) {
+        $output = "" | Select-Object TimeStamp, User, Reason, Action
+        $output.TimeStamp = $powerEvent.TimeCreated
+
+        # Define the regular expression pattern to capture the "on behalf of user" information
+        $pattern = "on behalf of user ([^\s]+)"
+
+        # Use the -match operator to find the match in the message property
+        if ($powerEvent.message -match $pattern) {
+            $onBehalfOfUser = $matches[1]
+
+            # Check if the user is not "NT" (system)
+            if ($onBehalfOfUser -ne "NT") {
+                $output.User = $onBehalfOfUser
+            } else {
+                $output.User = "System"
+            }
+        } else {
+            $output.User = "System"
+        }
+
+        # Determine the action based on the event ID
+        if ($powerEvent.ID -eq 6005) {
+            $output.Action = "Startup"
+        }
+        else {
+            $output.Action = $powerEvent.Properties[4].Value
+        }
+
+        # For events other than startup, capture the reason property
+        if ($powerEvent.ID -ne 6005) {
+            $output.Reason = $powerEvent.Properties[0].Value
+        }
+
+        # Add the output object to the result array
+        $result += $output
+    }
+
+    # Return the result array in a formatted table
+    return ($result | Format-Table)
+}
 
 export-modulemember -function * -alias *
