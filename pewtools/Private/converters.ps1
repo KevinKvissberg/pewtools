@@ -16,5 +16,6 @@ function Convert-DateFormat {
         [string]$InputDate
     )
     # Convert the input date to the output date format
-    return (if ($InputDate) { [DateTime]::ParseExact($InputDate, 'yyyyMMdd', $null).ToString('yyyy-MM-dd') })
+    $date = if ($InputDate) { [DateTime]::ParseExact($InputDate, 'yyyyMMdd', $null).ToString('yyyy-MM-dd') }
+    return $date
 }
