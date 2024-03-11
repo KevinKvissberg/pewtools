@@ -4,7 +4,7 @@ pewtools is a collection of tools for managing and maintaining a Windows environ
 # Functions
 The following functions are availible
 
-## pingplus (alias "p", "pp"
+## pingplus (alias "p", "pp")
 This function is used to ping or check the accessibility of a target host or IP address.
 
 ## Get-NetInfo
