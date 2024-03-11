@@ -212,7 +212,7 @@ function Get-NetInfo {
     )
 
     # If the user requests the default gateway, return it
-    if ($defaultGateway) { 
+    if ($defaultGateway) {
         return (Get-NetRoute -DestinationPrefix "0.0.0.0/0" | Select-Object -ExpandProperty "NextHop")
     }
     # If the user requests DNS servers, return them
@@ -451,7 +451,7 @@ function Test-ServerHealth {
 
     # Create a new PSObject to store the health test results
     $output = New-Object PSObject
-    
+
     # Check disk usage
     Write-Output (Get-DiskUsage)
 
@@ -470,20 +470,21 @@ function Test-ServerHealth {
 
 
 Function Get-DiskUsage {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWMICmdlet','')]
     param (
         [Parameter()]
         [Alias("s", "q")]
         [switch]$silent
     )
     # Check Disk Space
-    $diskSpace = Get-WmiObject Win32_LogicalDisk -ComputerName $ServerName | Where-Object { $_.DriveType -eq 3 } | Select-Object DeviceID, FreeSpace, Size, UsedPercentage
+    $diskSpace = Get-WmiObject Win32_LogicalDisk -ComputerName "localhost" | Where-Object { $_.DriveType -eq 3 } | Select-Object DeviceID, FreeSpace, Size, UsedPercentage
     $allDisks = @()
     foreach ($disk in $diskSpace) {
         $disk.FreeSpace = [math]::Round($disk.FreeSpace / 1GB, 2)
         $disk.Size = [math]::Round($disk.Size / 1GB, 2)
         $UsedPercentage = [math]::Round((($disk.Size - $disk.FreeSpace) / $disk.Size) * 100, 2)
         $allDisks += $disk
-        
+
         if ($silent) { continue }
         $disk.UsedPercentage = ("[" + ("#" * $UsedPercentage) + " " * (100 - $UsedPercentage) + "]")
     }
@@ -569,10 +570,10 @@ function Get-BootHistory {
     $result = @()
 
     # Array to store power events (shutdown and startup) from the System log
-    $powerEvents = @() 
+    $powerEvents = @()
     $powerEvents += Get-WinEvent -FilterHashTable @{LogName='System'; ID=1074}
     $powerEvents += Get-WinEvent -FilterHashTable @{LogName='System'; ID=6005}
-    
+
     # Sort the power events based on TimeCreated
     $powerEvents = $powerEvents | Sort-Object TimeCreated
 
@@ -621,8 +622,8 @@ function Get-BootHistory {
 # SIG # Begin signature block
 # MIIFWwYJKoZIhvcNAQcCoIIFTDCCBUgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUcRMVjNqu3MYll2dfFi91s8v1
-# up2gggL2MIIC8jCCAdqgAwIBAgIQYseIafgwqaZNeZ4d0CYhxTANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUqgLe1NYJP3ZPNS7Ulr9hniv1
+# fWygggL2MIIC8jCCAdqgAwIBAgIQYseIafgwqaZNeZ4d0CYhxTANBgkqhkiG9w0B
 # AQsFADAaMRgwFgYDVQQDEw9LZXZpbiBLdmlzc2JlcmcwHhcNMjMxMjE4MjMxODA0
 # WhcNMjQxMjE4MDUxODA0WjAaMRgwFgYDVQQDEw9LZXZpbiBLdmlzc2JlcmcwggEi
 # MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDKlNjwOPiKcBJ86HgpMe6dojbh
@@ -641,11 +642,11 @@ function Get-BootHistory {
 # MIIBywIBATAuMBoxGDAWBgNVBAMTD0tldmluIEt2aXNzYmVyZwIQYseIafgwqaZN
 # eZ4d0CYhxTAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIBDDEKMAigAoAAoQKAADAZ
 # BgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEEAYI3AgELMQ4wDAYKKwYB
-# BAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU2hOcfO1kPYJECg/ZKS4oSMRU0/AwDQYJ
-# KoZIhvcNAQEBBQAEggEAt3AQThnQrSem+AR6UZkTDJU4/kyvNJKraIagTK/KTTnu
-# 2M1R8XOrygEtpSWpyAHdQbgsyz8rLWFUSfNFiYx4zjLBOT2gkLFHvahUaG+WNE3f
-# QARgdNeB42V7azJlsMeVXSk2k8C0+dPXUFhKEssMBt+exLV+iCxYA2iZb8OiYyLe
-# GFnCpEUDbOwgStFdz/OkGJwfwQGl6yXjwGiiT+WSSwVWfYbzia8Ibfdr2+Su5l3K
-# W505M+QM1rm8hYjDzh20aG5VQ62gcCPd23o8UksDjRkIjMATYg0UJ1Jvt6m7E+v3
-# 9vw8J5hFbyYwHL7IgEN80vspN+O+BWWdIXtTIVgKyg==
+# BAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU0JdNZ4z0Hduq8+IUHPhO5Idqc/wwDQYJ
+# KoZIhvcNAQEBBQAEggEAAbafO5o/bYtGVA/bFa5JFdt7IB+L78qye0ih9iKJdMql
+# dZIhT750X5PejMzqj11IjAD8Ic2opxnCFWtoWjGHsl3I7nRTiAdnD/GOrqJAbs9O
+# AMKTMkKJBcenZ4x247JcHVPYWqA+nC/hL3AFt7OYqjU+YV+m09SZocxclVP3DNd9
+# 7WZ7kMZSKCglOs8mBaTwhbTXJpd7FkxcDBK4zMNoWEMy97TT9deZP0kffPYrG6+G
+# WGgOdmgU+0ULl4L9QhdLNCMgBab6FJP9Mz/waPOkw8N7+0ngHkBZj3to8SPSb2KS
+# KGrOLOGmq6+SlWp/UVKUH+g0e2A4QcIcpLY1c+SErQ==
 # SIG # End signature block
