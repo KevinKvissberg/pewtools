@@ -1,35 +1,35 @@
-Function New-Password {
+﻿Function New-Password {
     <#
     .SYNOPSIS
     Generates a random password
-    
+
     .DESCRIPTION
     Generates a random password with the specified length and constraints.
-    
+
     .PARAMETER Length
     The length of the password
-    
+
     .PARAMETER NoSpecial
     If set, the password will not contain special characters
-    
+
     .PARAMETER NoNumbers
     If set, the password will not contain numbers
-    
+
     .PARAMETER OnlyNumbers
     If set, the password will only contain numbers
-    
+
     .PARAMETER OnlyLowercase
     If set, the password will only contain lowercase letters
-    
+
     .PARAMETER OnlyUppercase
     If set, the password will only contain uppercase letters
-    
+
     .PARAMETER AllowSimilarChars
     If set, the password will contain similar characters (e.g. 1, l, I, 0, O, etc.)
-    
+
     .PARAMETER ListLength
     The number of passwords to generate
-    
+
     .EXAMPLE
     New-Password -Length 16 -NoSpecial -ListLength 5
     #>
@@ -40,16 +40,16 @@ Function New-Password {
 
         [Parameter()]
         [switch]$NoSpecial,
-        
+
         [Parameter()]
         [switch]$NoNumbers,
-        
+
         [Parameter()]
         [switch]$OnlyNumbers,
-        
+
         [Parameter()]
         [switch]$OnlyLowercase,
-        
+
         [Parameter()]
         [switch]$OnlyUppercase,
 
@@ -108,20 +108,20 @@ Function New-Password {
     }
 }
 
-Function New-PasswordUsingWords {
+Function New-PasswordUsingWord {
     <#
     .SYNOPSIS
     Generates a random password using words
-    
+
     .DESCRIPTION
     Generates a random password using words from a word list.
-    
+
     .PARAMETER Words
     The number of words to use in the password
-    
+
     .PARAMETER ListLength
     The number of passwords to generate
-    
+
     .EXAMPLE
     New-PasswordWords -Length 5 -ListLength 5
     #>

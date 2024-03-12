@@ -1,9 +1,9 @@
-#region Broad test functions
+﻿#region Broad test functions
 function Test-ServerHealth {
     <#
     .SYNOPSIS
     Tests the health of the server by checking disk usage, gateway ping, internet connectivity, and DNS resolution.
-    
+
     .DESCRIPTION
     This function tests the health of the server by performing various checks such as disk usage, gateway ping, internet connectivity, and DNS resolution.
     #>

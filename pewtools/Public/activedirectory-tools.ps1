@@ -1,17 +1,17 @@
-function Initialize-GPUpdate {
+﻿function Initialize-GPUpdate {
     <#
     .SYNOPSIS
     Use alias gpu for writing the command gpupdate faster.
-    
+
     .DESCRIPTION
     This function initializes a Group Policy update with optional parameters such as force, target, and boot.
-    
+
     .PARAMETER noForce
     Suppresses the force update if this switch is present.
-    
+
     .PARAMETER target
     Specifies the target for the Group Policy update. Possible values are "Computer", "User", or "Both" (default).
-    
+
     .PARAMETER boot
     Performs a boot-time Group Policy update if this switch is present.
     #>
