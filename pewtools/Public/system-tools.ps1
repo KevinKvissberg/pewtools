@@ -1,20 +1,20 @@
-#region SystemInfo Getters
+﻿#region SystemInfo Getters
 function Get-LocalDetails {
     <#
     .SYNOPSIS
     Retrieves local system details including hostname, username, uptime, domain, system manufacturer, OS install date, network information, default gateway, DNS servers, internet access, and domain access.
-    
+
     .DESCRIPTION
     The Get-LocalDetails function retrieves various details about the local system and returns them as an object. The function collects information such as the hostname, username, uptime, domain, system manufacturer, OS install date, network information, default gateway, DNS servers, internet access, and domain access.
-    
+
     .PARAMETER None
     This function does not accept any parameters.
-    
+
     .EXAMPLE
     Get-LocalDetails
-    
+
     This example demonstrates how to use the Get-LocalDetails function to retrieve local system details.
-    
+
     .OUTPUTS
     The function returns an object with the following properties:
     - Hostname: The hostname of the local system.
@@ -87,7 +87,7 @@ Function Get-DiskUsage {
     <#
     .SYNOPSIS
     Gets disk usage information for the local system.
-    
+
     .DESCRIPTION
     This function retrieves disk usage information for the local system, including details such as drive letter, free space, total size, and used percentage.
     #>
@@ -114,7 +114,7 @@ function Get-Apps {
     <#
     .SYNOPSIS
     Retrieves information about installed software on a Windows system.
-    
+
     .DESCRIPTION
     This function queries the Windows Registry to gather information about installed software,
     focusing on the "Uninstall" key in the registry.
@@ -156,20 +156,20 @@ function Trace-Eventlog {
     <#
     .SYNOPSIS
     Continuously monitors and retrieves new events from the specified event log with optional filtering.
-    
+
     .DESCRIPTION
     This function continuously monitors and retrieves new events from the specified event log,
     allowing optional filtering by source, message, and entry type.
-    
+
     .PARAMETER LogName
     Specifies the name of the event log to monitor. Default is "Application".
-    
+
     .PARAMETER Source
     Specifies the event source. Default is "*".
-    
+
     .PARAMETER Message
     Specifies a message filter for the events. Default is "*".
-    
+
     .PARAMETER EntryType
     Specifies the entry types to include (e.g., "Error", "Warning", "Information", "SuccessAudit", "FailureAudit").
     #>
@@ -255,7 +255,7 @@ function Get-BootHistory {
     <#
     .SYNOPSIS
     Retrieves information about system boot history.
-    
+
     .DESCRIPTION
     This function retrieves information about system boot history by querying the System event log for event IDs 1074 and 6005.
     It provides details such as timestamp, user, reason/application for the boot, and the associated action.
@@ -323,14 +323,14 @@ function Get-CertificateExpiry {
     <#
     .SYNOPSIS
     Retrieves information about certificate expiry for the specified target.
-    
+
     .DESCRIPTION
     This function retrieves information about certificate expiry for either the local machine or a remote target.
     It checks the certificates in the "My" store and provides details such as subject, thumbprint, expiration date, and whether it will expire soon.
-    
+
     .PARAMETER target
     Specifies the target machine. If not provided, it checks certificates on the local machine.
-    
+
     .PARAMETER credentials
     Specifies the credentials to be used when checking certificates on a remote machine.
     #>
