@@ -33,7 +33,7 @@
     .EXAMPLE
     New-Password -Length 16 -NoSpecial -ListLength 5
     #>
-    [CmdletBinding(DefaultParameterSetName = "AllChars")]
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [Parameter(Position = 0)]
         [int]$Length = 12,
@@ -104,7 +104,9 @@
         }
 
         # Output the password
-        Write-Output $password
+        if ($PSCmdlet.ShouldProcess("Localhost", "Generate password")) {
+            Write-Output $password
+        }
     }
 }
 
@@ -125,6 +127,7 @@ Function New-PasswordUsingWord {
     .EXAMPLE
     New-PasswordWords -Length 5 -ListLength 5
     #>
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
         [Parameter(Position = 0)]
         [ValidateRange(1, [int]::MaxValue)]
@@ -155,6 +158,8 @@ Function New-PasswordUsingWord {
         $password = $wordsToUse -join $divider
 
         # Output the password
-        Write-Output $password
+        if ($PSCmdlet.ShouldProcess("Localhost", "Generate password with words")) {
+            Write-Output $password
+        }
     }
 }
