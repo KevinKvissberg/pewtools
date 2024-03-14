@@ -4,7 +4,7 @@ function pingplus {
     This function is used to ping or check the accessibility of a target host or IP address.
 
     .DESCRIPTION
-    The `pingplus` function allows you to ping a target host or IP address using ICMP or check the accessibility of a specific port using TCP.
+    The pingplus function allows you to ping a target host or IP address using ICMP or check the accessibility of a specific port using TCP.
 
     .PARAMETER target
     Specifies the target host or IP address to ping or check.
