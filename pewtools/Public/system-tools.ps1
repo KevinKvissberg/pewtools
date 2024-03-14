@@ -319,6 +319,118 @@ function Get-BootHistory {
 }
 #endregion
 
+#region File getters
+Function Find-FileFast {
+    <#
+    .SYNOPSIS
+    Quickly searches for files in a directory and its subdirectories.
+    
+    .DESCRIPTION
+    This function quickly searches for files in a directory and its subdirectories using a custom C# class.
+    
+    .PARAMETER Path
+    Specifies the path to search for files. Default is the current directory.
+    
+    .PARAMETER FileName
+    Specifies the name of the file to search for. Wildcards are supported.
+    
+    .EXAMPLE
+    Find-FileFast -FileName "example.txt"
+    #>
+    [alias("ff", "Find-File", "Get-File")]
+    param (
+        [Parameter()]
+        [string]$Path = ".\",
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$FileName
+    )
+    add-type -TypeDefinition @"
+using System;
+using System.IO;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+
+public class FileSearch {
+    public struct WIN32_FIND_DATA {
+        public uint dwFileAttributes;
+        public System.Runtime.InteropServices.ComTypes.FILETIME ftCreationTime;
+        public System.Runtime.InteropServices.ComTypes.FILETIME ftLastAccessTime;
+        public System.Runtime.InteropServices.ComTypes.FILETIME ftLastWriteTime;
+        public uint nFileSizeHigh;
+        public uint nFileSizeLow;
+        public uint dwReserved0;
+        public uint dwReserved1;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string cFileName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
+        public string cAlternateFileName;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
+    public static extern IntPtr FindFirstFile
+      (string lpFileName, out WIN32_FIND_DATA lpFindFileData);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
+    public static extern bool FindNextFile
+      (IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
+    public static extern bool FindClose(IntPtr hFindFile);
+
+    static IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+
+    public static class Globals {
+        public static BlockingCollection<string> resultFileList {get;set;}
+    }
+
+    public static BlockingCollection<string> GetTreeFiles(string path, string searchFile) {
+        Globals.resultFileList = new BlockingCollection<string>();
+        List<string> dirList = new List<string>();
+        searchFile = @"^" + searchFile.Replace(@".",@"\.").Replace(@"*",@".*").Replace(@"?",@".") + @"$";
+        GetFiles(path, searchFile);
+        return Globals.resultFileList;
+    }
+
+    static void GetFiles(string path, string searchFile) {
+        path = path.EndsWith(@"\") ? path : path + @"\";
+        List<string> dirList = new List<string>();
+        WIN32_FIND_DATA fileData;
+        IntPtr handle = INVALID_HANDLE_VALUE;
+        handle = FindFirstFile(path + @"*", out fileData);
+        if (handle != INVALID_HANDLE_VALUE) {
+            FindNextFile(handle, out fileData);
+            while (FindNextFile(handle, out fileData)) {
+                if ((fileData.dwFileAttributes & 0x10) > 0) {
+                    string fullPath = path + fileData.cFileName;
+                    dirList.Add(fullPath);
+                } else {
+                    if (Regex.IsMatch(fileData.cFileName, searchFile, RegexOptions.IgnoreCase)) {
+                        string fullPath = path + fileData.cFileName;
+                        Globals.resultFileList.TryAdd(fullPath);
+                    }
+                }
+            }
+            FindClose(handle);
+            Parallel.ForEach(dirList, (dir) => {
+                GetFiles(dir, searchFile);
+            });
+        }
+    }
+}
+"@
+
+    $searchDir = (Resolve-Path $Path).Path
+    [fileSearch]::GetTreeFiles($searchDir, $FileName)
+
+    # Props to https://stackoverflow.com/questions/63956318/fastest-way-to-find-a-full-path-of-a-given-file-via-powershell - Carsten
+}
+#endregion
+
 function Get-CertificateExpiry {
     <#
     .SYNOPSIS
@@ -377,3 +489,4 @@ function Get-CertificateExpiry {
     # Return the result array
     return $result
 }
+
