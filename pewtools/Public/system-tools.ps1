@@ -319,7 +319,7 @@ function Get-BootHistory {
 }
 #endregion
 
-#region File getters
+#region File getters/setters
 Function Find-FileFast {
     <#
     .SYNOPSIS
@@ -428,6 +428,64 @@ public class FileSearch {
     [fileSearch]::GetTreeFiles($searchDir, $FileName)
 
     # Props to https://stackoverflow.com/questions/63956318/fastest-way-to-find-a-full-path-of-a-given-file-via-powershell - Carsten
+}
+
+function Invoke-FileTouch {
+    <#
+    .SYNOPSIS
+    Updates the last write time of a file to the current date and time.
+    
+    .DESCRIPTION
+    This function updates the last write time of a file to the current date and time.
+    
+    .PARAMETER file
+    Specifies the file to update the last write time for.
+    Using "\" at the end of the file path will create a directory if it does not exist.
+    
+    .PARAMETER date
+    Specifies the date and time to set as the last write time. Default is the current date and time.
+    
+    .EXAMPLE
+    Invoke-FileTouch -file "C:\example.txt"
+    touch "C:\example.txt" -date "2021-01-01"
+    #>
+    [alias("touch")]
+    [Cmdletbinding(SupportsShouldProcess)]
+    param (
+        [Parameter(Mandatory=$true, Position=0)]
+        [string[]]$file,
+        [Parameter()]
+        [ValidateScript({$_ -as [datetime]})]
+        [string]$date = (Get-Date),
+        [Parameter()]
+        [switch]$alsoUpdateCreationTime
+    )
+    process {
+        # Set the error action preference to stop
+        $ErrorActionPreference = "Stop"
+
+        # Loop through each file and update the last write time
+        foreach ($_ in $file) {
+            # Check if the file exists
+            if ($PSCmdlet.ShouldProcess("Localhost", "Create file/directory if file: '$($_)' does not exist, then update last write time")) {
+                if (-not (Test-Path $_)) {
+                    if ($_.EndsWith("\")) {
+                        # If the file path ends with "\", create a directory
+                        New-Item -Path $_ -ItemType Directory | Out-Null
+                    } else {
+                        # Otherwise create a new file
+                        New-Item -Path $_ -ItemType File | Out-Null
+                    }
+                }
+                # Set the last write time to the specified date
+                (Get-Item $_).LastWriteTime = $date
+                # If the -alsoUpdateCreationTime switch is used, update the creation time as well
+                if ($alsoUpdateCreationTime) {
+                    (Get-Item $_).CreationTime = $date
+                }
+            }
+        }
+    }
 }
 #endregion
 
