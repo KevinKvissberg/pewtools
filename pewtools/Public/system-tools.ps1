@@ -217,6 +217,76 @@ function Trace-Eventlog {
         [System.Threading.Thread]::Sleep(100)
     }
 }
+
+function Start-EventlogMonitor {
+    <#
+    .SYNOPSIS
+    Continuously monitors and retrieves new events from the specified event log with optional filtering.
+    
+    .DESCRIPTION
+    This function continuously monitors and retrieves new events from the specified event log, allowing optional filtering by source, message, and entry type.
+    
+    .PARAMETER LogName
+    Specifies the name of the event log to monitor. Default is "Application".
+    
+    .PARAMETER Source
+    Specifies the event source. Default is "*".
+    
+    .PARAMETER Message
+    Specifies a message filter for the events. Default is "*".
+    
+    .PARAMETER EntryType
+    Specifies the entry types to include (e.g., "Error", "Warning", "Information", "SuccessAudit", "FailureAudit").
+    
+    .EXAMPLE
+    Start-EventlogMonitor -LogName "System" -Source "Service Control Manager" -Message "stopped" -EntryType "Error"
+    #>
+    param (
+        [Parameter()]
+        [ValidateSet("Application", "HardwareEvents", "System", "Security")]
+        [string]$LogName = "Application",
+        [Parameter()]
+        [string]$Source = "*",
+        [Parameter()]
+        [string]$Message = "*",
+        [Parameter()]
+        [ValidateSet("Error", "Warning", "Information", "SuccessAudit", "FailureAudit")]
+        [String]$EntryType
+    )
+    # First run
+    $hasDoneFirstRun = $false
+    # Array to store retrieved events
+    $allevents = @()
+    # Continuous monitoring loop
+    while ($true) {
+        try {
+            # Retrieve new events based on parameters
+            if ($EntryType) {
+                $newEvents = Get-EventLog $LogName -Newest 1 -Source $Source -Message "*$Message*" -EntryType $EntryType -ErrorAction Stop | Where-Object { $_.Index -notin $allevents.Index }
+            } else {
+                $newEvents = Get-EventLog $LogName -Newest 1 -Source $Source -Message "*$Message*" -ErrorAction Stop | Where-Object { $_.Index -notin $allevents.Index }
+            }
+        }
+        catch {
+            Write-Error "Error: $_"
+            return;
+        }
+
+        # If new events are retrieved, add them to the array in reverse order
+        if ($null -ne $newEvents) {
+            [array]::Reverse($newEvents)
+            $allevents += $newEvents
+
+            if ($hasDoneFirstRun) {
+                Send-Toast "Pewtools: New Eventlog message!" "Type: $($newEvents.EntryType)`nSource: $($newEvents.Source)`nMessage: $($newEvents.Message)"
+            }
+            $hasDoneFirstRun = $true
+        }
+
+        # Pause for a short interval before checking for new events again
+        [System.Threading.Thread]::Sleep(500)
+    }
+}
 #endregion
 
 #region SystemBoot getters
