@@ -1,4 +1,17 @@
 function Send-Toast {
+    <#
+    .SYNOPSIS
+    Sends a toast notification to the user
+    
+    .PARAMETER Title
+    Title of the toast notification
+    
+    .PARAMETER Message
+    Message of the toast notification
+    
+    .EXAMPLE
+    Send-Toast -Title "Hello" -Message "World"
+    #>
     param(
         [String] $Title,
         [String] $Message
